@@ -7,6 +7,10 @@
  *
  * Notification data is fetched server-side on every render so the badge count
  * is always fresh without a client-side polling loop.
+ *
+ * Org list for the switcher is fetched via `Membership` rows and filtered for
+ * null organizations (can occur when an org is soft-deleted or FK constraint
+ * allows null) before sorting alphabetically.
  */
 import { auth, signOut } from "@/auth";
 import Image from "next/image";
@@ -55,6 +59,7 @@ export const NavBar = async () => {
         .then((ms) =>
           ms
             .map((m) => m.organization)
+            .filter((org) => org !== null)
             .sort((a, b) => a.name.localeCompare(b.name)),
         )
         .catch((error) => {

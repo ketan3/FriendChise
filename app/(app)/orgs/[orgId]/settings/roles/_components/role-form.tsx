@@ -3,8 +3,16 @@
 /**
  * Shared form for creating and editing a role.
  *
+ * Used in two contexts:
+ *  1. **Create** — opened via the page sidebar "+ Create Role" button; rendered
+ *     inside the `ActionSidebar` panel. `onSuccess` closes the panel and
+ *     refreshes the roles table; `onCancel` closes the panel.
+ *  2. **Edit** — opened from the `···` row menu in `RolesClient`; same panel
+ *     mechanism, pre-filled with the role’s current values.
+ *
  * When `role` is supplied the form is in edit mode and pre-fills all fields.
- * On success it navigates back to the roles list.
+ * `onSuccess`/`onCancel` fall back to `router.push` to the roles list when not
+ * provided (e.g. if the form is ever embedded in a standalone page context).
  *
  * Fields:
  *  - Name — required, max 50 chars.
@@ -20,6 +28,7 @@ import { PERMISSION_ACTIONS, type PermissionAction } from "@/lib/constants";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { ColorPicker, randomColor } from "@/components/ui/color-picker";
 import { createRoleAction, updateRoleAction } from "@/app/actions/roles";
 import type { RoleWithPermissions } from "@/lib/services/roles";
 
@@ -39,16 +48,19 @@ interface RoleFormProps {
   role?: RoleWithPermissions;
   /** All tasks for this org — used to populate the eligibility picker. */
   tasks: { id: string; name: string }[];
+  /** Called after a successful create/update. Falls back to router.push to the roles list. */
+  onSuccess?: () => void;
+  /** Called when the user cancels. Falls back to router.push to the roles list. */
+  onCancel?: () => void;
 }
 
-export function RoleForm({ orgId, role, tasks }: RoleFormProps) {
+export function RoleForm({ orgId, role, tasks, onSuccess, onCancel }: RoleFormProps) {
   const nameId = useId();
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
   const [name, setName] = useState(role?.name ?? "");
-  const [useColor, setUseColor] = useState(true);
-  const [color, setColor] = useState(() => role?.color ?? "#6366f1");
+  const [color, setColor] = useState(() => role?.color ?? randomColor());
   const [permissions, setPermissions] = useState<PermissionAction[]>(
     role?.permissions.map((p) => p.action) ?? [],
   );
@@ -82,7 +94,7 @@ export function RoleForm({ orgId, role, tasks }: RoleFormProps) {
 
     const data = {
       name,
-      color: useColor ? color : "#6366f1",
+      color,
       permissions,
       taskIds: eligibleTaskIds,
     };
@@ -94,7 +106,11 @@ export function RoleForm({ orgId, role, tasks }: RoleFormProps) {
 
       if (result.ok) {
         toast.success(role ? "Role updated." : "Role created.");
-        router.push(`/orgs/${orgId}/settings/roles`);
+        if (onSuccess) {
+          onSuccess();
+        } else {
+          router.push(`/orgs/${orgId}/settings/roles`);
+        }
       } else {
         setError(result.error);
       }
@@ -120,25 +136,8 @@ export function RoleForm({ orgId, role, tasks }: RoleFormProps) {
 
       {/* Color */}
       <div className="space-y-1.5">
-        <label className="flex items-center gap-2 text-sm font-medium cursor-pointer select-none">
-          <input
-            type="checkbox"
-            checked={useColor}
-            onChange={(e) => setUseColor(e.target.checked)}
-            disabled={isPending}
-            className="h-4 w-4 rounded accent-primary border border-input bg-background cursor-pointer"
-          />
-          Use custom color
-        </label>
-        {useColor && (
-          <input
-            type="color"
-            value={color}
-            onChange={(e) => setColor(e.target.value)}
-            disabled={isPending}
-            className="h-8 w-14 rounded border border-input cursor-pointer"
-          />
-        )}
+        <label className="text-sm font-medium">Color</label>
+        <ColorPicker value={color} onChange={setColor} disabled={isPending} />
       </div>
 
       {/* Permissions */}
@@ -249,7 +248,11 @@ export function RoleForm({ orgId, role, tasks }: RoleFormProps) {
         <Button
           type="button"
           variant="outline"
-          onClick={() => router.push(`/orgs/${orgId}/settings/roles`)}
+          onClick={() =>
+            onCancel
+              ? onCancel()
+              : router.push(`/orgs/${orgId}/settings/roles`)
+          }
           disabled={isPending}
         >
           Cancel
