@@ -4,18 +4,24 @@
  * TasksSidebarContent — page sidebar for the tasks list page.
  *
  * Sections:
- *  - Filters — sort order, role filter, list/card view toggle
+ *  - Mode nav — three views of the task library:
+ *      All       (mode=shared)    tasks the org inherited + available franchise tasks
+ *      My Tasks  (mode=list)      only tasks the org has actively inherited
+ *      Shared    (mode=available) only franchise GLOBAL tasks not yet inherited
+ *  - Filters — sort order, role filter, tag filter, list/card view toggle
  *  - Actions — Create Task link (canManageTasks only)
  *
- * All filter/sort/view state is URL-driven: each control pushes a new URL so
- * the server page re-renders with the updated params. This keeps the sidebar
- * and the task table in sync without a shared client context.
+ * All mode/filter/sort/view state is URL-driven: each control pushes a new URL
+ * so the server page re-renders with updated params. The last-used mode is also
+ * persisted to localStorage so it survives navigation away and back.
  */
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ChevronDown, LayoutGrid, List, Plus } from "lucide-react";
+import { useEffect } from "react";
+import { ChevronDown, Globe, LayoutGrid, List, ListTodo, Plus, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SegmentedControl } from "@/components/ui/segmented-control";
+import { SidebarNavItem } from "@/components/layout/sidebar-nav-item";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -37,6 +43,8 @@ interface TasksSidebarContentProps {
   roleId: string | null;
   tagId: string | null;
   view: "list" | "card";
+  mode: "list" | "shared" | "available";
+  isModeExplicit: boolean;
 }
 
 export function TasksSidebarContent({
@@ -48,21 +56,43 @@ export function TasksSidebarContent({
   roleId,
   tagId,
   view,
+  mode,
+  isModeExplicit,
 }: TasksSidebarContentProps) {
   const router = useRouter();
+
+  const TASKS_MODE_KEY = "tasks-mode";
+
+  useEffect(() => {
+    if (!isModeExplicit) {
+      const saved = localStorage.getItem(TASKS_MODE_KEY);
+      if ((saved === "list" || saved === "available") && mode !== saved) {
+        router.replace(buildHref({ mode: saved as "list" | "available" }));
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   function buildHref(overrides: {
     sort?: SortOption;
     roleId?: string | null;
     tagId?: string | null;
     view?: "list" | "card";
+    mode?: "list" | "shared" | "available";
   }) {
     const params = new URLSearchParams();
-    const next = { sort, roleId, tagId, view, ...overrides };
+    const next = { sort, roleId, tagId, view, mode, ...overrides };
     if (next.sort && next.sort !== "name-asc") params.set("sort", next.sort);
     if (next.roleId) params.set("roleId", next.roleId);
     if (next.tagId) params.set("tagId", next.tagId);
     if (next.view && next.view !== "list") params.set("view", next.view);
+    if (
+      next.mode === "list" ||
+      next.mode === "available" ||
+      (next.mode === "shared" && isModeExplicit)
+    ) {
+      params.set("mode", next.mode);
+    }
     const qs = params.toString();
     return `/orgs/${orgId}/tasks${qs ? `?${qs}` : ""}`;
   }
@@ -72,8 +102,32 @@ export function TasksSidebarContent({
 
   return (
     <>
-      {/* Filters section */}
-      <div className="px-3 pt-3 pb-2">
+      {/* Mode nav items */}
+      <div>
+        <SidebarNavItem
+          title="All"
+          url={buildHref({ mode: "shared" })}
+          icon={Globe}
+          isActive={mode === "shared"}
+          onClick={() => localStorage.setItem(TASKS_MODE_KEY, "shared")}
+        />
+        <SidebarNavItem
+          title="My Tasks"
+          url={buildHref({ mode: "list" })}
+          icon={ListTodo}
+          isActive={mode === "list"}
+          onClick={() => localStorage.setItem(TASKS_MODE_KEY, "list")}
+        />
+        <SidebarNavItem
+          title="Shared"
+          url={buildHref({ mode: "available" })}
+          icon={Share2}
+          isActive={mode === "available"}
+          onClick={() => localStorage.setItem(TASKS_MODE_KEY, "available")}
+        />
+      </div>
+
+      <div className="px-3 pt-3 pb-2 border-t border-border">
         <p className="text-xs font-medium text-sidebar-foreground/50 uppercase tracking-wider px-1 mb-2">
           Filters
         </p>
@@ -136,20 +190,6 @@ export function TasksSidebarContent({
             </DropdownMenu>
           )}
 
-          {/* View toggle */}
-          <SegmentedControl
-            size="sm"
-            className="w-fit"
-            value={view}
-            onChange={(v) =>
-              router.push(buildHref({ view: v as "list" | "card" }))
-            }
-            options={[
-              { value: "list", label: <List className="h-4 w-4" /> },
-              { value: "card", label: <LayoutGrid className="h-4 w-4" /> },
-            ]}
-          />
-
           {/* Tag filter */}
           {tags.length > 0 && (
             <TagFilterButton
@@ -160,13 +200,26 @@ export function TasksSidebarContent({
                 ...(sort !== "name-asc" ? { sort } : {}),
                 ...(roleId ? { roleId } : {}),
                 ...(view !== "list" ? { view } : {}),
+                ...(mode === "list" ? { mode: "list" } : mode === "available" ? { mode: "available" } : {}),
               }}
             />
           )}
+
+          {/* View toggle */}
+          <SegmentedControl
+            size="sm"
+            className="w-fit"
+            value={view}
+            onChange={(v) => router.push(buildHref({ view: v as "list" | "card" }))}
+            options={[
+              { value: "list", label: <List className="h-4 w-4" /> },
+              { value: "card", label: <LayoutGrid className="h-4 w-4" /> },
+            ]}
+          />
         </div>
       </div>
 
-      {canManageTasks && (
+      {canManageTasks && mode === "list" && (
         <div className="px-3 pt-2 pb-3 border-t border-border">
           <p className="text-xs font-medium text-sidebar-foreground/50 uppercase tracking-wider px-1 mb-2">
             Actions

@@ -1,22 +1,30 @@
 /**
  * View Task page — `/orgs/[orgId]/tasks/[taskId]`
  *
- * Server component. Any org member can view. Conditionally shows the
- * Actions dropdown (Edit / Delete) only to members with `MANAGE_TASKS`.
- * Includes a back-link toolbar, a detail card with all task fields,
- * and an eligible-roles section.
- * Returns 404 if the task does not belong to the org.
+ * Server component. Any org member can view tasks their org owns or has
+ * inherited via TaskInheritance. Returns 404 if neither applies.
+ *
+ * The page sidebar (TaskDetailSidebar) conditionally renders:
+ *  - "Inherited from franchisor" notice — franchisee orgs viewing a parent task
+ *  - Sharing controls (publish / make private) — task-owning org with MANAGE_TASKS
+ *  - Layout editor (Edit Sections panel) — any member with MANAGE_TASKS
+ *  - Actions (Edit link, Delete) — task-owning org with MANAGE_TASKS
+ *
+ * Section layout rows are fetched server-side and passed to the sidebar so the
+ * drag-to-reorder panel opens immediately without a loading state.
  */
 import { notFound } from "next/navigation";
 import { PermissionAction } from "@prisma/client";
 import { requireOrgMemberPage } from "@/lib/authz";
 import { getOrgMembership, memberHasPermission } from "@/lib/authz/_shared";
-import { getTaskById } from "@/lib/services/tasks";
+import { getAccessibleTaskById } from "@/lib/services/tasks";
+import { getSectionLayout, type SectionLayoutRow } from "@/lib/services/task-sections";
 import { createSignedReadUrl } from "@/lib/supabase-storage";
+import { RegisterPageSidebarSubContent } from "@/components/layout/page-sidebar-context";
 import { Toolbar } from "@/components/layout/toolbar";
 import { BackButton } from "@/components/layout/back-button";
-import { TaskViewActions } from "./task-view-actions";
 import { TaskDescription } from "./task-description";
+import { TaskDetailSidebar } from "./task-detail-sidebar";
 import { formatDate } from "@/lib/utils";
 
 function formatDuration(min: number): string {
@@ -51,24 +59,55 @@ const ViewTaskPage = async ({ params, searchParams }: Props) => {
 
   const { userId } = await requireOrgMemberPage(orgId);
 
-  const [task, membership] = await Promise.all([
-    getTaskById(orgId, taskId),
+  const [accessible, membership] = await Promise.all([
+    getAccessibleTaskById(orgId, taskId),
     getOrgMembership(orgId, userId),
   ]);
-  if (!task) notFound();
+  if (!accessible) notFound();
 
-  const [canManage, imageSignedUrl] = await Promise.all([
+  const { task, isOwner } = accessible;
+
+  const [canManage, imageSignedUrl, sectionRows] = await Promise.all([
     membership
       ? memberHasPermission(membership.id, orgId, PermissionAction.MANAGE_TASKS)
       : Promise.resolve(false),
     task.imageUrl ? createSignedReadUrl(task.imageUrl) : Promise.resolve(null),
+    getSectionLayout(taskId, orgId),
   ]);
+
+  const sharedBy = !isOwner
+    ? task?.organization?.name ?? undefined
+    : undefined;
+  const createdByName = task?.createdByName ?? undefined;
 
   const eligibleRoles = task.eligibility.map((e) => e.role);
   const taskTags = task.tags.map((t) => t.tag);
+  const sections = sectionRows.map((s: SectionLayoutRow) => ({
+    id: s.id,
+    type: s.type,
+    title: s.title,
+    scope: s.scope as "ORG" | "GLOBAL",
+    position: s.position,
+    visible: s.visible,
+  }));
 
   return (
     <>
+      <RegisterPageSidebarSubContent
+        content={
+          <TaskDetailSidebar
+            orgId={orgId}
+            taskId={taskId}
+            taskName={task.name}
+            isOwner={isOwner}
+            canManage={canManage}
+            scope={task.scope as "ORG" | "GLOBAL"}
+            sections={sections}
+            sharedBy={sharedBy}
+            createdByName={createdByName}
+          />
+        }
+      />
       <Toolbar>
         <BackButton
           fallbackHref={backHref}
@@ -76,9 +115,6 @@ const ViewTaskPage = async ({ params, searchParams }: Props) => {
         >
           {backLabel}
         </BackButton>
-        {canManage && (
-          <TaskViewActions orgId={orgId} taskId={taskId} taskName={task.name} />
-        )}
       </Toolbar>
 
       <div className="w-full max-w-3xl mx-auto flex flex-col gap-6">

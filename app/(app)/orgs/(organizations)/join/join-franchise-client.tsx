@@ -127,18 +127,38 @@ function ScheduleFields({
   );
 }
 
-function useScheduleState() {
-  const [timezone, setTimezone] = useState("Australia/Sydney");
-  const [address, setAddress] = useState("");
-  const [openTime, setOpenTime] = useState("");
-  const [closeTime, setCloseTime] = useState("");
-  const [days, setDays] = useState<DayKey[]>([
-    "mon",
-    "tue",
-    "wed",
-    "thu",
-    "fri",
-  ]);
+function minutesToTime(min: number): string {
+  const h = Math.floor(min / 60).toString().padStart(2, "0");
+  const m = (min % 60).toString().padStart(2, "0");
+  return `${h}:${m}`;
+}
+
+type ScheduleDefaults = {
+  timezone?: string | null;
+  address?: string | null;
+  openTimeMin?: number | null;
+  closeTimeMin?: number | null;
+  operatingDays?: string[];
+};
+
+function useScheduleState(defaults?: ScheduleDefaults) {
+  const [timezone, setTimezone] = useState(defaults?.timezone ?? "Australia/Sydney");
+  const [address, setAddress] = useState(defaults?.address ?? "");
+  const [openTime, setOpenTime] = useState(
+    defaults?.openTimeMin != null ? minutesToTime(defaults.openTimeMin) : "",
+  );
+  const [closeTime, setCloseTime] = useState(
+    defaults?.closeTimeMin != null ? minutesToTime(defaults.closeTimeMin) : "",
+  );
+
+  const validDays: DayKey[] = (() => {
+    if (!defaults?.operatingDays?.length) return ["mon", "tue", "wed", "thu", "fri"];
+    const allowedDays = new Set<string>(["mon", "tue", "wed", "thu", "fri", "sat", "sun"]);
+    const filtered = defaults.operatingDays.filter((d): d is DayKey => allowedDays.has(d));
+    return filtered.length > 0 ? filtered : ["mon", "tue", "wed", "thu", "fri"];
+  })();
+
+  const [days, setDays] = useState<DayKey[]>(validDays);
   return {
     timezone,
     setTimezone,
@@ -170,8 +190,10 @@ function buildSchedulePayload(s: ReturnType<typeof useScheduleState>) {
 
 export default function JoinFranchisePage({
   timezones,
+  defaultSchedule,
 }: {
   timezones: TimezoneOption[];
+  defaultSchedule?: ScheduleDefaults;
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -180,7 +202,7 @@ export default function JoinFranchisePage({
   const [manualToken, setManualToken] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const schedule = useScheduleState();
+  const schedule = useScheduleState(defaultSchedule);
 
   const effectiveToken = initialToken || manualToken;
 
