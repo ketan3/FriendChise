@@ -13,7 +13,9 @@
 
 import dotenv from "dotenv";
 dotenv.config({ path: ".env", quiet: true });
-dotenv.config({ path: ".env.local", override: true, quiet: true });
+if (!process.env.SKIP_DOTENV_LOCAL) {
+  dotenv.config({ path: ".env.local", override: true, quiet: true });
+}
 
 if (process.env.NODE_ENV === "production" && !process.argv.includes("--confirm-production")) {
   console.error("This script must not be run in production without --confirm-production flag.");
