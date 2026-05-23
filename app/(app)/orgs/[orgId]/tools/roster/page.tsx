@@ -14,8 +14,8 @@ import {
 } from "@/lib/services/roster";
 import { RosterPageClient } from "./_components/roster-page-client";
 
-// Pre-fetch 8 weeks centred on today so the initial render has data
-// without a client round-trip. The client can navigate further freely.
+// Pre-fetch 4 weeks before and 8 weeks after today so the initial render
+// has data without a client round-trip. The client lazy-fetches further weeks.
 function getInitialWeekStarts(): Date[] {
   const today = new Date();
   const day = today.getUTCDay();
@@ -23,9 +23,12 @@ function getInitialWeekStarts(): Date[] {
   const monday = new Date(today);
   monday.setUTCDate(today.getUTCDate() + diff);
   monday.setUTCHours(0, 0, 0, 0);
-  return Array.from({ length: 8 }, (_, i) => {
-    const d = new Date(monday);
-    d.setUTCDate(monday.getUTCDate() + i * 7);
+  // Start 4 weeks before current Monday
+  const start = new Date(monday);
+  start.setUTCDate(monday.getUTCDate() - 4 * 7);
+  return Array.from({ length: 13 }, (_, i) => {
+    const d = new Date(start);
+    d.setUTCDate(start.getUTCDate() + i * 7);
     return d;
   });
 }
@@ -63,6 +66,7 @@ export default async function RosterPage({
     <RosterPageClient
       orgId={orgId}
       entries={entries}
+      prefetchedWeekMs={weekStarts.map((d) => d.getTime())}
       dayConfigs={dayConfigs}
       members={members}
       roles={roles.map((r) => ({ id: r.id, name: r.name, color: r.color }))}

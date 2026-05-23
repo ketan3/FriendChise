@@ -5,7 +5,7 @@
  * Renders the Toolbar (nav only) and the board.
  */
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Toolbar } from "@/components/layout/toolbar";
@@ -15,6 +15,8 @@ import { RosterClient } from "./roster-client";
 import type { RosterEntryRow, DayConfigRow, OrgMember } from "./roster-board";
 
 const WEEKS_SHOWN = 5;
+// Prefetch this many extra weeks beyond the visible window when lazy-loading
+const PREFETCH_BUFFER = 3;
 
 function getMondayOfWeek(d: Date): Date {
   const date = new Date(d);
@@ -45,6 +47,7 @@ type RosterTemplate = { id: string; name: string; cycleWeeks: number };
 interface RosterPageClientProps {
   orgId: string;
   entries: RosterEntryRow[];
+  prefetchedWeekMs: number[];
   dayConfigs: DayConfigRow[];
   members: OrgMember[];
   roles: Role[];
@@ -58,7 +61,8 @@ interface RosterPageClientProps {
 
 export function RosterPageClient({
   orgId,
-  entries,
+  entries: initialEntries,
+  prefetchedWeekMs,
   dayConfigs,
   members,
   roles,
@@ -75,6 +79,10 @@ export function RosterPageClient({
   const [filterMembershipId, setFilterMembershipId] = useState<string | null>(
     currentMembershipId,
   );
+  const [allEntries, setAllEntries] = useState<RosterEntryRow[]>(initialEntries);
+  const [loadedWeekMs] = useState<Set<number>>(
+    () => new Set(prefetchedWeekMs),
+  );
 
   const weekStarts = useMemo(
     () =>
@@ -85,6 +93,44 @@ export function RosterPageClient({
   const todayMonday = getMondayOfWeek(new Date()).getTime();
   const todayDayIndex = getTodayDayIndex(orgTimezone);
   const isTodayInView = anchorMonday.getTime() === todayMonday;
+
+  // Fetch any weeks in the visible window (plus buffer) that haven't been loaded yet
+  const fetchMissingWeeks = useCallback(
+    async (anchor: Date) => {
+      const needed: Date[] = [];
+      for (let i = -PREFETCH_BUFFER; i < WEEKS_SHOWN + PREFETCH_BUFFER; i++) {
+        const w = addWeeks(anchor, i);
+        if (!loadedWeekMs.has(w.getTime())) {
+          needed.push(w);
+          loadedWeekMs.add(w.getTime()); // mark immediately to avoid duplicate fetches
+        }
+      }
+      if (needed.length === 0) return;
+
+      const weeksParam = needed.map((d) => d.toISOString()).join(",");
+      try {
+        const res = await fetch(
+          `/api/orgs/${orgId}/roster-entries?weeks=${encodeURIComponent(weeksParam)}`,
+        );
+        if (!res.ok) return;
+        // API returns dates as ISO strings — rehydrate weekStart to Date
+        const raw: (Omit<RosterEntryRow, "weekStart"> & { weekStart: string })[] =
+          await res.json();
+        const fetched: RosterEntryRow[] = raw.map((e) => ({
+          ...e,
+          weekStart: new Date(e.weekStart),
+        }));
+        setAllEntries((prev) => [...prev, ...fetched]);
+      } catch {
+        // silently ignore — board will just show empty cells
+      }
+    },
+    [orgId, loadedWeekMs],
+  );
+
+  useEffect(() => {
+    fetchMissingWeeks(anchorMonday);
+  }, [anchorMonday, fetchMissingWeeks]);
 
   return (
     <>
@@ -129,7 +175,7 @@ export function RosterPageClient({
 
       <RosterClient
         orgId={orgId}
-        entries={entries}
+        entries={allEntries}
         dayConfigs={dayConfigs}
         members={members}
         weekStarts={weekStarts}
