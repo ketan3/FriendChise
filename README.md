@@ -11,9 +11,17 @@ Production deployment: **[friendchise.app](https://friendchise.app)**
 
 ## Screenshots
 
-> _TODO: add screenshots / screen recording_
+| Dashboard | Timetable |
+|-----------|-----------|
+| ![Dashboard](https://ivantran-2001.github.io/projects/pictures/friendchise/Org%20Overview%20Page.png) | ![Timetable](https://ivantran-2001.github.io/projects/pictures/friendchise/Timetable%20Calender%20Mode.png) |
 
-<!-- Replace this comment with: ![Timetable view](docs/screenshots/timetable.png) etc. -->
+| Task Library (card view) | Task Comments & Voting |
+|--------------------------|------------------------|
+| ![Task Cards](https://ivantran-2001.github.io/projects/pictures/friendchise/Tasks%20Card%20Mode.jpg) | ![Task Comments](https://ivantran-2001.github.io/projects/pictures/friendchise/Task%20Comments.png) |
+
+| Staff Roster | Conversion Tool |
+|--------------|-----------------|
+| ![Roster](https://ivantran-2001.github.io/projects/pictures/friendchise/Roster%20List.png) | ![Conversion](https://ivantran-2001.github.io/projects/pictures/friendchise/Conversion%20Entries.png) |
 
 ## Tech Stack
 
