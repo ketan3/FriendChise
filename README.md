@@ -13,15 +13,15 @@ Production deployment: **[friendchise.app](https://friendchise.app)**
 
 | Dashboard | Timetable |
 |-----------|-----------|
-| ![Dashboard](https://ivantran-2001.github.io/projects/pictures/friendchise/Org%20Overview%20Page.png) | ![Timetable](https://ivantran-2001.github.io/projects/pictures/friendchise/Timetable%20Calender%20Mode.png) |
+| ![Dashboard](https://ivantran-2001.github.io/projects/pictures/friendchise/V2/Org%20Overview%20Page.png) | ![Timetable](https://ivantran-2001.github.io/projects/pictures/friendchise/V2/Timetable%20Calender%20Mode.png) |
 
 | Task Library (card view) | Task Comments & Voting |
 |--------------------------|------------------------|
-| ![Task Cards](https://ivantran-2001.github.io/projects/pictures/friendchise/Tasks%20Card%20Mode.jpg) | ![Task Comments](https://ivantran-2001.github.io/projects/pictures/friendchise/Task%20Comments.png) |
+| ![Task Cards](https://ivantran-2001.github.io/projects/pictures/friendchise/V2/Tasks%20Card%20Mode.jpg) | ![Task Comments](https://ivantran-2001.github.io/projects/pictures/friendchise/V2/Task%20Comments.png) |
 
 | Staff Roster | Conversion Tool |
 |--------------|-----------------|
-| ![Roster](https://ivantran-2001.github.io/projects/pictures/friendchise/Roster%20List.png) | ![Conversion](https://ivantran-2001.github.io/projects/pictures/friendchise/Conversion%20Entries.png) |
+| ![Roster](https://ivantran-2001.github.io/projects/pictures/friendchise/V2/Roster%20List.png) | ![Conversion](https://ivantran-2001.github.io/projects/pictures/friendchise/V2/Conversion%20Entries.png) |
 
 ## Tech Stack
 
