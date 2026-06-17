@@ -1,13 +1,11 @@
-import crypto from "crypto";
+import { resolveSeedNamespace } from "./seed-namespace";
 
 export function ensureTestRunNamespace(): string {
-  if (process.env.SEED_NAMESPACE?.trim()) {
-    return process.env.SEED_NAMESPACE.trim();
+  if (!process.env.SEED_NAMESPACE?.trim()) {
+    process.env.SEED_NAMESPACE = "random";
   }
 
-  const namespace = `run-${crypto.randomUUID().slice(0, 8)}`;
-  process.env.SEED_NAMESPACE = namespace;
-  return namespace;
+  return resolveSeedNamespace();
 }
 
 export const TEST_RUN_NAMESPACE = ensureTestRunNamespace();
