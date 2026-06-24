@@ -12,7 +12,7 @@ If you are looking for ideas, see [Ideas for Contributing](https://friendchise.a
 
 ## 2. Follow the exact setup steps
 
-If you want the shorter overview, see [Quick Start](https://friendchise.app/doc/development/quick-start). If you are new, follow the steps below exactly.
+If you want the shorter overview, see [Quick Start](https://friendchise.app/doc/development/quick-start). If you are new, follow the steps below exactly; that guide shows the exact local path, including Docker commands for macOS/Linux and Windows.
 
 ### 2.1 Fork and clone the repo
 
