@@ -9,7 +9,7 @@ order: 3
 Fork the repo first, then clone your fork locally.
 
 ```bash
-git clone https://github.com/<your-username>/FriendChise.git
+git clone https://github.com/IvanTran-2001/FriendChise.git
 cd FriendChise
 ```
 
