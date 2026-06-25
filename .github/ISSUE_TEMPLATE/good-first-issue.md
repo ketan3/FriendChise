@@ -16,6 +16,8 @@ Help expand the Dev Utilities Sandbox by creating an interactive playground and 
 
 ## ⭐ Before You Start
 If you enjoy the project, please consider starring the repository. Every star helps support future development and encourages more open-source contributions.
+If you need setup help, start here: https://friendchise.app/doc/development/quick-start
+To claim this issue, comment with `I want to take this`.
 
 ---
 
