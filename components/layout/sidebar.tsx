@@ -32,6 +32,7 @@ import {
   Bell,
   Tag,
   ChevronLeft,
+  Megaphone,
 } from "lucide-react";
 import {
   MobileSidebarCtx,
@@ -69,6 +70,7 @@ type NavItem = {
 
 function getOrgItems(orgId: string): NavItem[] {
   return [
+    { title: "Updates", url: `/orgs/${orgId}/announcements`, icon: Megaphone },
     { title: "Home", url: `/orgs/${orgId}`, icon: Building2 },
     {
       title: "Sched",
@@ -262,11 +264,10 @@ export function AppSidebar() {
                 />
                 <SidebarNavItem
                   variant="app"
-                  title="Help"
-                  url="/help"
+                  title="Docs"
+                  url="/doc"
                   icon={HelpCircle}
-                  isActive={false}
-                  disabled
+                  isActive={isActiveItem("/doc")}
                 />
               </>
             )}
