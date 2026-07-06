@@ -6,8 +6,6 @@ labels: good first issue, enhancement, help wanted, Beginner Friendly, UI
 ---
 
 # 🟢 Good Issue
-**Time:** ~30-45 minutes
-
 **Difficulty:** Beginner
 
 **Skill Level:** Any contributor

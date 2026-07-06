@@ -6,8 +6,6 @@ labels: enhancement, Intermediate, help wanted, UI, good first issue
 ---
 
 # 🟡 Good First Issue: Add a Logs sidebar to the admin panel
-**Time:** ~1-2 hours
-
 **Difficulty:** Good First Issue
 
 **Skill Level:** Contributors comfortable with admin UI and data filtering

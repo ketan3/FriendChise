@@ -6,8 +6,6 @@ labels: enhancement, advanced, help wanted, UI, architecture
 ---
 
 # 🟠 Advanced: <issue title>
-**Time:** ~2-4 hours
-
 **Difficulty:** Advanced
 
 **Skill Level:** Contributors comfortable with Prisma, relations, and UI/data flow
