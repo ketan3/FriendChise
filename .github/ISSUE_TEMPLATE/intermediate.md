@@ -45,17 +45,6 @@ Admins should be able to:
 
 ---
 
-## 🚀 Quick Info
-| Category | Details |
-| --- | --- |
-| Difficulty | Good First Issue |
-| Time | ~1-2 hours |
-| Focus | Admin UI, filtering, logs |
-| Tech | React, Next.js, Prisma |
-| Good For | Contributors with some UI + data experience |
-
----
-
 ## 💡 Note
 Likely files:
 - `app/admin/layout.tsx`

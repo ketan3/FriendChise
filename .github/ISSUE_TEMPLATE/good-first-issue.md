@@ -32,13 +32,5 @@ To claim this issue, comment with `I want to take this`. If you run into any iss
 ## ✅ Expected Result
 <!-- What should be true when the issue is done -->
 
-## 🚀 Quick Info
-| Category | Details |
-| --- | --- |
-| Difficulty | Beginner |
-| Time | ~30-45 minutes |
-| Focus | Small task, first-time contributor friendly |
-| Good For | First-time contributors |
-
 ## 💡 Note
 <!-- Add likely files, links, or extra guidance here -->

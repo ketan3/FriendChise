@@ -36,14 +36,6 @@ To claim this issue, comment with `I want to take this`. If you run into any iss
 
 <expected result details here>
 
-## 🚀 Quick Info
-| Category | Details |
-| --- | --- |
-| Difficulty | Advanced |
-| Time | ~2-4 hours |
-| Focus | <focus area> |
-| Good For | <who this is good for> |
-
 ## 💡 Note
 Likely files:
 - <file 1>
