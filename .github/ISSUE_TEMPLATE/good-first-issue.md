@@ -2,7 +2,7 @@
 name: 🟢 Good First Issue
 about: First-time-contributor-only task with setup notes, requirements, and submission checklist
 title: "🟢 [Good First Issue] First-time contributors only"
-labels: good first issue, enhancement, help wanted, Beginner Friendly, UI
+labels: good first issue, enhancement, help wanted, Beginner Friendly, UI, first time
 ---
 
 # 🟢 Good First Issue: First-time contributors only
