@@ -1,17 +1,16 @@
 import { encode } from "next-auth/jwt";
 import { NextResponse } from "next/server";
-import { auth } from "@/auth";
+import { prisma } from "@/lib/prisma";
+import { prepareDemoSession } from "@/lib/demo";
 
 const MOBILE_TOKEN_COOKIE_NAME = "friendchise.mobile-session-token";
 
 function isValidCallbackUrl(callbackUrl: string, requestUrl: string): boolean {
   try {
-    // Allow relative paths (same-origin)
     if (callbackUrl.startsWith("/") && !callbackUrl.startsWith("//")) {
       return true;
     }
 
-    // Allow the mobile app's deep-link schemes.
     const protocol = new URL(callbackUrl).protocol;
     if (
       protocol === "friendchise:" ||
@@ -21,7 +20,6 @@ function isValidCallbackUrl(callbackUrl: string, requestUrl: string): boolean {
       return true;
     }
 
-    // For absolute URLs, validate against request origin
     const callback = new URL(callbackUrl);
     const request = new URL(requestUrl);
     return callback.origin === request.origin;
@@ -31,6 +29,10 @@ function isValidCallbackUrl(callbackUrl: string, requestUrl: string): boolean {
 }
 
 export async function GET(request: Request) {
+  if (process.env.NODE_ENV !== "development") {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+
   const { searchParams } = new URL(request.url);
   const callbackUrl = searchParams.get("callbackUrl");
 
@@ -42,9 +44,14 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Invalid callbackUrl" }, { status: 400 });
   }
 
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.redirect(new URL("/signin?hint=account_required", request.url));
+  const session = await prepareDemoSession();
+  const user = await prisma.user.findUnique({
+    where: { id: session.userId },
+    select: { id: true, email: true, name: true, image: true },
+  });
+
+  if (!user) {
+    return NextResponse.json({ error: "Demo user not found" }, { status: 404 });
   }
 
   const secret = process.env.AUTH_SECRET;
@@ -54,18 +61,19 @@ export async function GET(request: Request) {
 
   const token = await encode({
     token: {
-      sub: session.user.id,
-      email: session.user.email ?? undefined,
-      name: session.user.name ?? undefined,
-      picture: session.user.image ?? undefined,
+      sub: user.id,
+      email: user.email ?? undefined,
+      name: user.name ?? undefined,
+      picture: user.image ?? undefined,
     },
     secret,
     salt: MOBILE_TOKEN_COOKIE_NAME,
-    maxAge: 60 * 60 * 24 * 30,
+    maxAge: 60 * 60 * 24,
   });
 
   const redirectUrl = new URL(callbackUrl, request.url);
   redirectUrl.searchParams.set("token", token);
+  redirectUrl.searchParams.set("orgId", session.orgId);
 
   return NextResponse.redirect(redirectUrl);
 }

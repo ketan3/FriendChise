@@ -1,17 +1,16 @@
 import { encode } from "next-auth/jwt";
 import { NextResponse } from "next/server";
-import { auth } from "@/auth";
+import { prisma } from "@/lib/prisma";
+import { getDevUsers } from "@/app/(auth)/signin/get-dev-users";
 
 const MOBILE_TOKEN_COOKIE_NAME = "friendchise.mobile-session-token";
 
 function isValidCallbackUrl(callbackUrl: string, requestUrl: string): boolean {
   try {
-    // Allow relative paths (same-origin)
     if (callbackUrl.startsWith("/") && !callbackUrl.startsWith("//")) {
       return true;
     }
 
-    // Allow the mobile app's deep-link schemes.
     const protocol = new URL(callbackUrl).protocol;
     if (
       protocol === "friendchise:" ||
@@ -21,7 +20,6 @@ function isValidCallbackUrl(callbackUrl: string, requestUrl: string): boolean {
       return true;
     }
 
-    // For absolute URLs, validate against request origin
     const callback = new URL(callbackUrl);
     const request = new URL(requestUrl);
     return callback.origin === request.origin;
@@ -31,20 +29,32 @@ function isValidCallbackUrl(callbackUrl: string, requestUrl: string): boolean {
 }
 
 export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url);
-  const callbackUrl = searchParams.get("callbackUrl");
-
-  if (!callbackUrl) {
-    return NextResponse.json({ error: "callbackUrl required" }, { status: 400 });
+  if (process.env.NODE_ENV !== "development") {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
-  if (!isValidCallbackUrl(callbackUrl, request.url)) {
+  const { searchParams } = new URL(request.url);
+  const email = searchParams.get("email");
+  const callbackUrl = searchParams.get("callbackUrl");
+
+  if (!email) {
+    return NextResponse.json({ error: "email required" }, { status: 400 });
+  }
+
+  if (callbackUrl && !isValidCallbackUrl(callbackUrl, request.url)) {
     return NextResponse.json({ error: "Invalid callbackUrl" }, { status: 400 });
   }
 
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.redirect(new URL("/signin?hint=account_required", request.url));
+  const devUsers = getDevUsers();
+  const devUser = devUsers.find((user) => user.email === email);
+
+  if (!devUser) {
+    return NextResponse.json({ error: "Unknown dev user" }, { status: 404 });
+  }
+
+  const user = await prisma.user.findUnique({ where: { email: devUser.email } });
+  if (!user) {
+    return NextResponse.json({ error: "User not found" }, { status: 404 });
   }
 
   const secret = process.env.AUTH_SECRET;
@@ -54,15 +64,27 @@ export async function GET(request: Request) {
 
   const token = await encode({
     token: {
-      sub: session.user.id,
-      email: session.user.email ?? undefined,
-      name: session.user.name ?? undefined,
-      picture: session.user.image ?? undefined,
+      sub: user.id,
+      email: user.email ?? undefined,
+      name: user.name ?? undefined,
+      picture: user.image ?? undefined,
     },
     secret,
     salt: MOBILE_TOKEN_COOKIE_NAME,
     maxAge: 60 * 60 * 24 * 30,
   });
+
+  if (!callbackUrl) {
+    return NextResponse.json({
+      token,
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        image: user.image,
+      },
+    });
+  }
 
   const redirectUrl = new URL(callbackUrl, request.url);
   redirectUrl.searchParams.set("token", token);
