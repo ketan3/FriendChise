@@ -107,7 +107,7 @@ export default async function PublicMenuPage({ params }: PageProps) {
   if (!data) notFound();
 
   return (
-    <div className="relative flex min-h-dvh flex-col overflow-y-auto overflow-x-hidden bg-stone-100 pb-16">
+    <div className="relative flex h-dvh flex-col overflow-hidden bg-stone-100">
       <MenuNavbar
         orgName={data.orgName}
         orgLogoUrl={data.orgLogoUrl}

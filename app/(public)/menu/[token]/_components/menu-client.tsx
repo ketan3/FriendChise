@@ -208,7 +208,7 @@ export function MenuClient({
   }
 
   return (
-    <>
+    <div className="flex min-h-0 flex-1 flex-col">
       {/* ── Sticky tab bar ─────────────────────────────────────────────────── */}
       {allTabs.length > 1 && (
         <div className="sticky top-16 z-20 border-b border-stone-200 bg-white shadow-sm">
@@ -243,7 +243,7 @@ export function MenuClient({
       )}
 
       {/* ── Sections ───────────────────────────────────────────────────────── */}
-      <div className="mx-auto max-w-5xl space-y-10 px-4 pb-28 pt-6 sm:px-6 sm:pb-32">
+      <div className="mx-auto min-h-0 flex-1 max-w-5xl space-y-10 overflow-y-auto px-4 pb-28 pt-6 sm:px-6 sm:pb-32">
         {isEmpty ? (
           <div className="flex flex-col items-center justify-center gap-3 py-24 text-center">
             <span className="text-5xl">🍽️</span>
@@ -274,6 +274,6 @@ export function MenuClient({
           </>
         )}
       </div>
-    </>
+    </div>
   );
 }
