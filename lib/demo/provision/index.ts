@@ -3,7 +3,7 @@ import { Prisma } from "@prisma/client";
 
 import { prisma } from "@/lib/platform/prisma";
 
-import { DEMO_GLOBAL_TASK_HARD_CAP, DEMO_GLOBAL_TASK_SOFT_CAP, DEMO_JWT_TTL_MS, DEMO_LIMITS, DEMO_MAX_CONCURRENT, DEMO_TTL_MS, isDemoEmail } from "./config";
+import { DEMO_GLOBAL_TASK_HARD_CAP, DEMO_GLOBAL_TASK_SOFT_CAP, DEMO_LIMITS, DEMO_MAX_CONCURRENT, DEMO_TTL_MS, isDemoEmail } from "./config";
 import { cleanupExpiredDemos, withDemoProvisionLock } from "./helpers";
 import { seedDemoOrg } from "./seed-demo-org";
 
@@ -49,7 +49,11 @@ export async function prepareDemoSession(): Promise<{ userId: string; orgId: str
         if (rechecked >= DEMO_GLOBAL_TASK_HARD_CAP) throw new Error("Demo is under high load. Please try again in 10 minutes.");
       }
 
-      const active = await tx.user.count({ where: { email: { endsWith: "@demo.friendchise.app" }, createdAt: { gte: new Date(Date.now() - DEMO_JWT_TTL_MS) } } });
+      const active = await tx.demoSession.count({
+        where: {
+          expiresAt: { gt: new Date() },
+        },
+      });
       if (active >= DEMO_MAX_CONCURRENT) throw new Error("Demo capacity reached. Please try again in a few minutes.");
 
       const demoId = crypto.randomUUID().replace(/-/g, "").slice(0, 12);
