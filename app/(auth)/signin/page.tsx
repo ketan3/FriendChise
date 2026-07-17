@@ -12,8 +12,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { SignInToast } from "./sign-in-toast";
-import { prepareDemoSession } from "@/lib/demo";
-import { DemoProvisionError } from "@/lib/demo";
+import { DemoProvisionError, prepareDemoSession } from "@/lib/demo";
 import { TryDemoButton } from "./try-demo-button";
 import { DevUserPicker } from "./dev-user-picker";
 import { getDevUsers } from "./get-dev-users";

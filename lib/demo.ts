@@ -1,1 +1,1 @@
-export { DEMO_JWT_TTL_MS, DEMO_LIMITS, checkDemoLimit, isDemoEmail, prepareDemoSession } from "./demo/index";
+export { DEMO_JWT_TTL_MS, DEMO_LIMITS, checkDemoLimit, DemoProvisionError, isDemoEmail, prepareDemoSession } from "./demo/index";
