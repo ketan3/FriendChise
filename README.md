@@ -79,7 +79,7 @@ The platform is designed to continuously expand with new operational tools as bu
 - Menu & QR Generator
 - Item Lists
 
-![Tools](public/docs/tool.gif)
+![Tools](public/docs/tools.gif)
 
 ---
 
