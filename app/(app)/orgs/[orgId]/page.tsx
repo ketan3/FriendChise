@@ -181,7 +181,7 @@ const Page = async ({ params }: { params: Promise<{ orgId: string }> }) => {
   const dashboardMode =
     org.parentId == null && org.ownerId === userId
       ? "franchisor"
-      : org.parentId != null
+      : org.parentId != null && org.ownerId === userId
         ? "franchisee"
         : canManageMembers || canManageTasks || canManageTimetable || canManageSettings
           ? "manager"
@@ -241,17 +241,18 @@ const Page = async ({ params }: { params: Promise<{ orgId: string }> }) => {
   const pendingInvites = invitePage.items.filter((invite) => invite.status === "PENDING");
 
   const isActiveNow = (item: (typeof todayInstances)[number]) =>
-    item.startTimeMin <= currentTimeMin && currentTimeMin < item.startTimeMin + item.task.durationMin;
+    item.status !== "DONE" &&
+    item.status !== "SKIPPED" &&
+    item.startTimeMin <= currentTimeMin &&
+    currentTimeMin < item.startTimeMin + item.task.durationMin;
   const isOverdue = (item: (typeof todayInstances)[number]) =>
     item.status === "TODO" && item.startTimeMin < currentTimeMin;
 
   const activeShifts = todayInstances.filter(isActiveNow);
   const overdueToday = todayInstances.filter(isOverdue);
-  const doneToday = todayInstances.filter(
-    (item) => item.status === "DONE" || item.status === "SKIPPED",
-  ).length;
+  const doneToday = todayInstances.filter((item) => item.status === "DONE").length;
   const outstandingToday = todayInstances.filter(
-    (item) => item.status !== "DONE" && item.status !== "SKIPPED",
+    (item) => item.status === "TODO" || item.status === "IN_PROGRESS",
   );
 
   const openNow =
@@ -275,11 +276,14 @@ const Page = async ({ params }: { params: Promise<{ orgId: string }> }) => {
     ? upcomingInstances.filter((item) => item.assignees.some((assignee) => assignee.membership.id === currentMembership.id))
     : [];
   const myOutstandingToday = myTodayInstances.filter(
-    (item) => item.status !== "DONE" && item.status !== "SKIPPED",
+    (item) => item.status === "TODO" || item.status === "IN_PROGRESS",
   );
   const amWorkingNow = myTodayInstances.some(isActiveNow);
   const myNextToday = myOutstandingToday.slice().sort((a, b) => a.startTimeMin - b.startTimeMin)[0] ?? null;
-  const myNextShift = myUpcomingInstances[0] ?? null;
+  const myNextShift =
+    myUpcomingInstances
+      .slice()
+      .sort((a, b) => a.date.localeCompare(b.date) || a.startTimeMin - b.startTimeMin)[0] ?? null;
 
   const rosteredTodayCount = new Set(
     todayInstances.flatMap((item) => item.assignees.map((assignee) => assignee.membership.id)),
@@ -305,7 +309,9 @@ const Page = async ({ params }: { params: Promise<{ orgId: string }> }) => {
           ? `Rostered today · ${myNextToday.task.title} starts in ${formatMinutesUntil(diff)}`
           : `Rostered today · ${myNextToday.task.title} is due now`;
     } else if (myTodayInstances.length > 0) {
-      personalStatusLine = "Rostered today · all of your assigned work is complete";
+      personalStatusLine = myTodayInstances.some((item) => item.status === "SKIPPED")
+        ? "Rostered today · no remaining assigned work"
+        : "Rostered today · all of your assigned work is complete";
     } else if (myNextShift) {
       personalStatusLine = `Not rostered today · next shift ${formatLocalDateLabel(myNextShift.date, org.timezone, todayStr)} at ${minTo12h(myNextShift.startTimeMin)}`;
     } else {
@@ -364,7 +370,7 @@ const Page = async ({ params }: { params: Promise<{ orgId: string }> }) => {
   if (freshAnnouncements.length > 0) {
     changedParts.push(`${freshAnnouncements.length} new ${freshAnnouncements.length === 1 ? "announcement" : "announcements"}`);
   }
-  const changedLine = changedParts.length > 0 ? changedParts.join(" · ") : "No changes since your last visit.";
+  const changedLine = changedParts.length > 0 ? changedParts.join(" · ") : "No changes right now.";
 
   const attentionLine =
     attentionItems.length > 0 ? attentionItems.map((item) => item.title).join(" · ") : "Nothing needs your attention right now.";
@@ -612,7 +618,7 @@ const Page = async ({ params }: { params: Promise<{ orgId: string }> }) => {
             <Megaphone className="h-3.5 w-3.5 text-muted-foreground" />
             <h2 className="text-center text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground sm:text-left">Announcements &amp; updates</h2>
           </div>
-          <p className="mt-1 text-center text-sm text-muted-foreground sm:text-left">Pinned notices appear first.</p>
+          <p className="mt-1 text-center text-sm text-muted-foreground sm:text-left">Global notices are shared across locations.</p>
           <div className="mt-4 flex flex-col gap-2">
             {announcementPage.announcements.length > 0 ? (
               announcementPage.announcements.map((announcement) => (
@@ -625,7 +631,7 @@ const Page = async ({ params }: { params: Promise<{ orgId: string }> }) => {
                     <div className="flex items-center gap-2">
                       {announcement.scope === "GLOBAL" && (
                         <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-widest text-primary">
-                          Pinned
+                          Global
                         </span>
                       )}
                       <p className="truncate text-sm font-medium text-foreground">{announcement.title}</p>
