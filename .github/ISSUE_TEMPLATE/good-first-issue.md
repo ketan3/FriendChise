@@ -14,7 +14,7 @@ This issue is intended for first-time contributors only. If you are not a first-
 
 ## ⭐ Before You Start
 If you need setup help, start with quick-start: https://friendchise.app/doc/development/quick-start
-To claim this issue, comment with `I want to take this`. If you run into any issues, message here.
+To claim this issue, include `I want to take this` anywhere in your comment. If you run into any issues, message here anytime you wish.
 
 ---
 

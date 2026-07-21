@@ -14,7 +14,7 @@ Add a `Logs` section to the admin panel so admins can browse audit logs, search 
 
 ## ⭐ Before You Start
 If you need setup help, start with quick-start: https://friendchise.app/doc/development/quick-start
-To claim this issue, comment with `I want to take this`. If you run into issues, leave a comment on the thread.
+To claim this issue, include `I want to take this` anywhere in your comment. If you run into issues, leave a comment on the thread anytime you wish.
 
 ---
 
