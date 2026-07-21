@@ -14,10 +14,12 @@
  *   Ctrl/Cmd+Shift+X → Strike
  */
 
-import { useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Placeholder from "@tiptap/extension-placeholder";
+import Image from "@tiptap/extension-image";
+import Link from "@tiptap/extension-link";
 import { Markdown } from "tiptap-markdown";
 import type { MarkdownStorage } from "tiptap-markdown";
 import {
@@ -27,6 +29,8 @@ import {
   List,
   ListOrdered,
   Heading3,
+  ImagePlus,
+  Video,
 } from "lucide-react";
 import { cn } from "@/lib/core/utils";
 
@@ -100,6 +104,22 @@ export function RichTextEditor({
       Placeholder.configure({
         placeholder: placeholder ?? "Add a description…",
       }),
+      Image.configure({
+        inline: false,
+        allowBase64: true,
+      }),
+      Link.extend({
+        addAttributes() {
+          return {
+            ...this.parent?.(),
+            "data-video": {default: null},
+          };
+        },
+      }).configure({
+        openOnClick: false,
+        linkOnPaste: true,
+        autolink: true,
+      }),
       Markdown.configure({
         html: false,
         transformPastedText: true,
@@ -142,6 +162,22 @@ export function RichTextEditor({
     },
   });
 
+  const handleInsertImage = useCallback(() => {
+    const url = window.prompt("Enter image URL");
+    if (!url) return;
+    editor?.chain().focus().setImage({ src: url, alt: "" }).run();
+  }, [editor]);
+
+  const handleInsertVideo = useCallback(() => {
+    const url = window.prompt("Enter video URL(YouTube, Vimeo, or direct video file)");
+    if (!url) return;
+    editor?.chain().focus().insertContent({
+      type: "text",
+      text: "Video",
+      marks: [{ type: "link", attrs: { href: url, "data-video": "true"}}]
+    }).run();
+  }, [editor]);
+
   // Set initial hidden input value once editor is ready
   useEffect(() => {
     if (editor && hiddenRef.current) {
@@ -181,6 +217,20 @@ export function RichTextEditor({
           title="Strikethrough (Ctrl+Shift+S)"
         >
           <Strikethrough className="h-3.5 w-3.5" />
+        </ToolbarBtn>
+        <ToolbarBtn
+          onClick={handleInsertImage}
+          active={editor?.isActive("image") ?? false}
+          title="Insert image markdown"
+        >
+          <ImagePlus className="h-3.5 w-3.5" />
+        </ToolbarBtn>
+        <ToolbarBtn
+          onClick={handleInsertVideo}
+          active={editor?.isActive("link", { "data-video": "true" }) ?? false}
+          title="Insert Video markdown"
+        >
+          <Video className="h-3.5 w-3.5" />
         </ToolbarBtn>
 
         <div className="w-px h-4 bg-border mx-1 shrink-0" />
