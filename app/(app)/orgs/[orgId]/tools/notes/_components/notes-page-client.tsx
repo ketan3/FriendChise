@@ -3,7 +3,6 @@
 import { useState, useEffect, useRef, useTransition, useCallback } from "react";
 import { toast } from "sonner";
 import {
-  Cloud,
   CloudLightning,
   CheckCircle2,
   Loader2,
@@ -64,6 +63,8 @@ export function NotesPageClient({
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("saved");
   const [hasConflict, setHasConflict] = useState(false);
   const [editorVersion, setEditorVersion] = useState(0);
+  const localTitleRef = useRef(localTitle);
+  const localContentRef = useRef(localContent);
 
   // Keep track of pending save data to flush before page changes or on blur
   const pendingSaveRef = useRef<{ title: string; content: string } | null>(null);
@@ -72,6 +73,14 @@ export function NotesPageClient({
   // Sync draft states when active page changes
   const [prevActivePageId, setPrevActivePageId] = useState<string>(activePageId);
   const [prevActivePage, setPrevActivePage] = useState<NotePage | undefined>(activePage);
+
+  useEffect(() => {
+    localTitleRef.current = localTitle;
+  }, [localTitle]);
+
+  useEffect(() => {
+    localContentRef.current = localContent;
+  }, [localContent]);
 
   if (activePageId !== prevActivePageId || activePage !== prevActivePage) {
     setPrevActivePageId(activePageId);
@@ -277,8 +286,8 @@ export function NotesPageClient({
       if (pageRes.ok && pageRes.page) {
         const serverPage = pageRes.page;
 
-        const currentLocalTitle = pendingSaveRef.current?.title ?? localTitle;
-        const currentLocalContent = pendingSaveRef.current?.content ?? localContent;
+        const currentLocalTitle = pendingSaveRef.current?.title ?? localTitleRef.current;
+        const currentLocalContent = pendingSaveRef.current?.content ?? localContentRef.current;
 
         if (
           serverPage.title !== currentLocalTitle ||
@@ -327,7 +336,7 @@ export function NotesPageClient({
       if (intervalId) clearInterval(intervalId);
       document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
-  }, [orgId, activePageId, localTitle, localContent]);
+  }, [orgId, activePageId]);
 
   // Sidebar trigger for "+ Create first page" button
   function handleCreateClick() {
